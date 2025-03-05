@@ -644,6 +644,44 @@ outputs = layers.Dense(num_classes, activation='softmax', name='output_layer')(l
 
 model_early_stopping = keras.Model(inputs=inputs, outputs=outputs, name='dont_overfit_model_early_stopping')
 
+############################## ACTIVATION FUNCTIONS ######################################################
+
+activation = 'sigmoid' # 1/(1+e^-x)
+
+activation = 'tanh' #(e^x - e^-x)/(e^x + e^-x)
+
+activation = 'relu'   # max(0,x) --> = 0 if x <= 0 and = x if x > 0ç
+
+activation = 'lineal'   # x
+
+activation = 'softmax'   # For multiclass classification problems = e^xi/(sum(e^xN))
+
+
+############################## LOSS FUNCTIONS #############################################################
+
+model.compile(optimizer='adam', loss ='mean_squared_error')
+
+model.compile(optimizer='adam', loss ='mean_absolute_error')
+
+model.compile(optimizer='adam', loss ='categorical_crossentropy')   #if you have three classes, A, B, and C, one-hot 
+#encoding of class A would be [1, 0, 0], class B would be [0, 1, 0] and class C would be [0, 0, 1]
+
+model.compile(optimizer='adam', loss ='sparse_categorical_crossentropy')    #example, instead of one-hot encoding as 
+#described above, class A could be represented as 0, class B as 1, and class C as 2
+
+################################ METRICS ######################################################################
+
+model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolute_error'])
+
+model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_squared_error'])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['precision'])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['recall'])
+
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['recall', 'accuracy'])
 
 ############################### TENSORBOARD: REPRESENTATION OF EVOLUTION ################################
 
