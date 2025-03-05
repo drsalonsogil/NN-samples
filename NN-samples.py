@@ -696,3 +696,107 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram
 
 %tensorboard --logdir logs/fit
 
+########################## KERAS TUNER ###################################################################
+
+#Library for hyper-parameter tuning: number of units, type of activation, number of hidden layers, learning rate, etc
+
+pip install keras-tuner
+
+import kerastuner as kt
+
+def build_model(hp):
+    model = keras.Sequential()
+    # Sample different number of layers with hp.Int
+    for i in range(hp.Int('num_layers', 1, 3)):
+        # Sample different number of layers with hp.Int
+        model.add(layers.Dense(units=hp.Int('units_' + str(i),
+                                            min_value=32,
+                                            max_value=128,
+                                            step=32),
+                               activation='relu'))
+    # Sample different activation functions with hp.Choice 
+    model.add(layers.Dense(1, activation=hp.Choice('output_activation', ['relu', 'linear'])))
+    
+    # Sample different activation functions with hp.Choice 
+    model.compile(
+        optimizer=keras.optimizers.Adam(
+            hp.Choice('learning_rate', [1e-2, 1e-3, 1e-4])),
+        loss='mse',
+        metrics=['mae'])
+    return model
+
+#The Keras Tuner has four tuners available  `RandomSearch`, `Hyperband`, `BayesianOptimization`, and `Sklearn`
+
+tuner = kt.Hyperband(build_model,
+                     objective='val_loss',
+                     max_epochs=35,
+                     factor=2,
+                     hyperband_iterations=1,
+                     directory='my_dir',
+                     project_name='intro_to_kt')
+'''
+tuner = kt.RandomSearch(build_model,
+                     objective='val_loss',
+                     max_trials=100,
+                     directory='my_dir',
+                     project_name='intro_to_kt')
+'''
+stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+
+tuner.search(X_train_norm, y_train, epochs=30, validation_split=0.15, batch_size=32, callbacks=[stop_early])
+
+# Get the optimal hyperparameters
+best_hps=tuner.get_best_hyperparameters(num_trials=1)[0]
+print(best_hps.get_config())
+
+print(f"Best learning rate: {best_hps.get('learning_rate')}")
+print(f"Best output activation function: {best_hps.get('output_activation')}")
+print(f"Best number of hidden layers: {best_hps.get('num_layers')}")
+for i in range(best_hps.get('num_layers')):
+    print(f"Number of units of hidden layer {i+1}: {best_hps.get('units_' + str(i))}")
+
+#Train the best model
+model = tuner.hypermodel.build(best_hps)
+history = model.fit(X_train_norm, y_train, epochs=50, validation_split=0.15, callbacks=[stop_early])
+
+results = model.evaluate(X_test_norm, y_test, verbose=1)
+print('Test Loss: {}'.format(results[0]))
+
+
+########################### SEARCH WITH DROPOUT #######################################################
+
+def build_model(hp):
+    ...
+    return model
+
+
+tuner = kt.Hyperband(build_model,
+                     objective='val_loss',
+                     max_epochs=40,
+                     factor=2,
+                     hyperband_iterations=2,
+                     directory='my_dir_2',
+                     project_name='intro_to_kt')
+
+stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+tuner.search(X_train_norm, y_train, epochs=30, validation_split=0.15,
+             batch_size=32, callbacks=[stop_early])
+
+# Get the optimal hyperparameters
+best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+print(best_hps.get_config())
+
+print(f"Best learning rate: {best_hps.get('learning_rate')}")
+print(f"Best output activation function: {best_hps.get('output_activation')}")
+print(f"Best number of hidden layers: {best_hps.get('num_layers')}")
+for i in range(best_hps.get('num_layers')):
+    print(f"Number of units of hidden layer {i+1}: {best_hps.get('units_' + str(i))}")
+    #print(f"Dropout rate of hidden layer {i+1}: {best_hps.get('dp_' + str(i))}")
+
+model = tuner.hypermodel.build(best_hps)
+history = model.fit(X_train_norm, y_train, epochs=50, validation_split=0.15, callbacks=[stop_early])
+
+results = model.evaluate(X_test_norm, y_test, verbose=1)
+print('Test Loss: {}'.format(results[0]))
+
+###########################################################################################################
