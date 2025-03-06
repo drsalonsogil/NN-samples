@@ -644,6 +644,22 @@ outputs = layers.Dense(num_classes, activation='softmax', name='output_layer')(l
 
 model_early_stopping = keras.Model(inputs=inputs, outputs=outputs, name='dont_overfit_model_early_stopping')
 
+model_early_stopping.summary()
+
+model_early_stopping.compile(optimizer='adam',
+                             loss='sparse_categorical_crossentropy',
+                             metrics=['accuracy'])
+
+history_early_stopping = model_early_stopping.fit(
+    x,
+    y,
+    batch_size=64,
+    epochs=100,
+    validation_split=0.2,
+    shuffle=True,
+    callbacks=[es_callback]
+)
+
 ############################## ACTIVATION FUNCTIONS ######################################################
 
 activation = 'sigmoid' # 1/(1+e^-x)
